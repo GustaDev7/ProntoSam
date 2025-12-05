@@ -27,12 +27,26 @@ export const Home: React.FC = () => {
 
   useEffect(() => {
     const fetchGoogleReviews = async () => {
-      // FIX: Check if process is defined to avoid White Screen error in some environments
-      if (typeof process === 'undefined' || !process.env.API_KEY) return;
+      // Robust safety check for API Key to prevent White Screen of Death
+      let apiKey: string | undefined;
+      try {
+        // @ts-ignore
+        if (typeof process !== 'undefined' && process.env) {
+           // @ts-ignore
+           apiKey = process.env.API_KEY;
+        }
+      } catch (e) {
+        // Ignore reference errors if process is not defined
+      }
+
+      if (!apiKey) {
+        // If no API key, we just stay with the default static reviews
+        return;
+      }
 
       setIsLoadingReviews(true);
       try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash',
           contents: `Busque no Google Maps as avaliações da "ProntoSam Clínica Médica e Exames em Samambaia DF".
@@ -92,8 +106,8 @@ export const Home: React.FC = () => {
       <Navbar />
       <FloatingWhatsApp />
       
-      {/* HERO SECTION - Increased top padding to accommodate double navbar */}
-      <section className="relative min-h-[90vh] flex items-center pt-40 lg:pt-48 pb-20 overflow-hidden bg-white">
+      {/* HERO SECTION - Updated padding for taller Double Bar Header */}
+      <section className="relative min-h-[90vh] flex items-center pt-44 lg:pt-52 pb-20 overflow-hidden bg-white">
         {/* Abstract Background */}
         <div className="absolute top-0 right-0 w-3/4 h-full bg-blue-50/50 clip-path-slant hidden lg:block"></div>
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-accent/10 rounded-full blur-3xl"></div>
@@ -205,7 +219,7 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* CTA SECTION - NEW */}
+      {/* CTA SECTION */}
       <section className="py-20 bg-secondary relative overflow-hidden">
         <div className="absolute inset-0 bg-hero-pattern opacity-90"></div>
         <div className="absolute top-0 right-0 w-96 h-96 bg-accent blur-[120px] opacity-20"></div>
@@ -332,7 +346,7 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* CONTACT / LOCATION SECTION (No Form) */}
+      {/* CONTACT / LOCATION SECTION */}
       <section id="contact" className="py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
