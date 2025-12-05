@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { Button } from '../components/Button';
 import { ServiceCard } from '../components/ServiceCard';
 import { FloatingWhatsApp } from '../components/FloatingWhatsApp';
 import { SERVICES, REVIEWS, CONTACT_INFO } from '../constants';
-import { GoogleGenAI } from "@google/genai";
 import { Review } from '../types';
 import { 
   ChevronRight, 
@@ -19,92 +18,9 @@ import {
   CalendarCheck
 } from 'lucide-react';
 
-// Helper function to safely access environment variables without crashing
-const getSafeApiKey = (): string | undefined => {
-  try {
-    // Check if process is defined first to avoid ReferenceError
-    if (typeof process !== 'undefined' && process && process.env) {
-      // @ts-ignore
-      return process.env.API_KEY;
-    }
-  } catch (e) {
-    // Silently fail if process is not available
-    return undefined;
-  }
-  return undefined;
-};
-
 export const Home: React.FC = () => {
-  // State for dynamic reviews
-  const [activeReviews, setActiveReviews] = useState<Review[]>(REVIEWS);
-  const [reviewSources, setReviewSources] = useState<{uri: string, title: string}[]>([]);
-  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
-
-  useEffect(() => {
-    const fetchGoogleReviews = async () => {
-      const apiKey = getSafeApiKey();
-
-      if (!apiKey) {
-        // If no API key, we just stay with the default static reviews
-        return;
-      }
-
-      setIsLoadingReviews(true);
-      try {
-        const ai = new GoogleGenAI({ apiKey });
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: `Busque no Google Maps as avaliações da "ProntoSam Clínica Médica e Exames em Samambaia DF".
-          
-          Eu preciso que você LISTE 4 avaliações REAIS que tenham nota 4 ou 5 estrelas.
-          
-          Retorne EXATAMENTE um array JSON puro (sem markdown \`\`\`json ... \`\`\`) com o seguinte formato para cada avaliação:
-          [
-            {
-              "id": "string única",
-              "author": "Nome do Autor",
-              "text": "Texto da avaliação (resumido se for muito longo)",
-              "rating": numero_da_nota
-            }
-          ]
-          
-          Se não encontrar avaliações suficientes, retorne um array vazio.`,
-          config: {
-            tools: [{ googleMaps: {} }],
-          },
-        });
-
-        const text = response.text || '';
-        const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const jsonMatch = cleanText.match(/\[.*\]/s);
-        
-        if (jsonMatch) {
-          const parsedReviews = JSON.parse(jsonMatch[0]);
-          if (Array.isArray(parsedReviews) && parsedReviews.length > 0) {
-            setActiveReviews(parsedReviews);
-          }
-        }
-
-        const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-        const sources = chunks
-          .map((c: any) => {
-            if (c.web) return { uri: c.web.uri, title: c.web.title };
-            if (c.maps) return { uri: c.maps.uri, title: c.maps.title };
-            return null;
-          })
-          .filter((s: any) => s !== null);
-          
-        setReviewSources(sources);
-
-      } catch (error) {
-        console.warn("Erro ao buscar avaliações (usando backup):", error);
-      } finally {
-        setIsLoadingReviews(false);
-      }
-    };
-
-    fetchGoogleReviews();
-  }, []);
+  // Using static reviews from constants to ensure stability and prevent crashes
+  const [activeReviews] = useState<Review[]>(REVIEWS);
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-gray-50 text-gray-900 selection:bg-accent selection:text-white">
@@ -336,17 +252,15 @@ export const Home: React.FC = () => {
           </div>
           
           <div className="mt-12 flex justify-center">
-            {reviewSources.length > 0 && (
-                <a 
-                    href={reviewSources[0].uri} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-primary hover:text-blue-700 font-medium transition-colors"
-                >
-                    <MapIcon className="w-4 h-4" />
-                    Ver todas as avaliações no Google
-                </a>
-            )}
+            <a 
+                href="https://www.google.com/maps/place/ProntoSam+Cl%C3%ADnica+M%C3%A9dica+e+Exames/@-15.8828815,-48.0994199,17z" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-primary hover:text-blue-700 font-medium transition-colors"
+            >
+                <MapIcon className="w-4 h-4" />
+                Ver todas as avaliações no Google
+            </a>
           </div>
         </div>
       </section>
