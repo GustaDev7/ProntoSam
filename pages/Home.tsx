@@ -19,6 +19,21 @@ import {
   CalendarCheck
 } from 'lucide-react';
 
+// Helper function to safely access environment variables without crashing
+const getSafeApiKey = (): string | undefined => {
+  try {
+    // Check if process is defined first to avoid ReferenceError
+    if (typeof process !== 'undefined' && process && process.env) {
+      // @ts-ignore
+      return process.env.API_KEY;
+    }
+  } catch (e) {
+    // Silently fail if process is not available
+    return undefined;
+  }
+  return undefined;
+};
+
 export const Home: React.FC = () => {
   // State for dynamic reviews
   const [activeReviews, setActiveReviews] = useState<Review[]>(REVIEWS);
@@ -27,17 +42,7 @@ export const Home: React.FC = () => {
 
   useEffect(() => {
     const fetchGoogleReviews = async () => {
-      // Robust safety check for API Key to prevent White Screen of Death
-      let apiKey: string | undefined;
-      try {
-        // @ts-ignore
-        if (typeof process !== 'undefined' && process.env) {
-           // @ts-ignore
-           apiKey = process.env.API_KEY;
-        }
-      } catch (e) {
-        // Ignore reference errors if process is not defined
-      }
+      const apiKey = getSafeApiKey();
 
       if (!apiKey) {
         // If no API key, we just stay with the default static reviews
@@ -92,7 +97,7 @@ export const Home: React.FC = () => {
         setReviewSources(sources);
 
       } catch (error) {
-        console.error("Erro ao buscar avaliações do Google:", error);
+        console.warn("Erro ao buscar avaliações (usando backup):", error);
       } finally {
         setIsLoadingReviews(false);
       }
