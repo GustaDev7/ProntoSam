@@ -27,7 +27,8 @@ export const Home: React.FC = () => {
 
   useEffect(() => {
     const fetchGoogleReviews = async () => {
-      if (!process.env.API_KEY) return;
+      // FIX: Check if process is defined to avoid White Screen error in some environments
+      if (typeof process === 'undefined' || !process.env.API_KEY) return;
 
       setIsLoadingReviews(true);
       try {
@@ -91,8 +92,8 @@ export const Home: React.FC = () => {
       <Navbar />
       <FloatingWhatsApp />
       
-      {/* HERO SECTION */}
-      <section className="relative min-h-[90vh] flex items-center pt-32 pb-20 overflow-hidden bg-white">
+      {/* HERO SECTION - Increased top padding to accommodate double navbar */}
+      <section className="relative min-h-[90vh] flex items-center pt-40 lg:pt-48 pb-20 overflow-hidden bg-white">
         {/* Abstract Background */}
         <div className="absolute top-0 right-0 w-3/4 h-full bg-blue-50/50 clip-path-slant hidden lg:block"></div>
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-accent/10 rounded-full blur-3xl"></div>
